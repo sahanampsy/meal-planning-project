@@ -12,13 +12,26 @@
  * the website knows whether something went wrong.
  */
 
-/** Every action the website may call, mapped to the function that handles it. */
-function getActions_() {
-  return {
-    bootstrap: actionBootstrap_, // Phase 1: load everything the app needs
-    savePlanDay: actionSavePlanDay_, // Phase 2: change one day of the plan
-    addRecipes: actionAddRecipes_,   // Phase 2: add (or replace) recipes pasted into the app
-  };
+/**
+ * Every action the website may call, mapped to the name of the function that handles it.
+ * Names are looked up when called, so if one file wasn't updated in the Apps Script
+ * editor, only that action fails (with a clear message) instead of the whole app.
+ */
+var ACTIONS_ = {
+  bootstrap: 'actionBootstrap_',     // Phase 1: load everything the app needs
+  savePlanDay: 'actionSavePlanDay_', // Phase 2: change one day of the plan
+  addRecipes: 'actionAddRecipes_',   // Phase 2: add (or replace) recipes pasted into the app
+};
+
+function getHandler_(action) {
+  var name = ACTIONS_[action];
+  if (!name) throw apiError_('unknown_action', 'Unknown action: ' + action);
+  var fn = globalThis[name];
+  if (typeof fn !== 'function') {
+    throw apiError_('setup_incomplete', 'The Apps Script is missing ' + name +
+      '. Paste the latest apps-script files (especially Actions.gs), save, and deploy a new version.');
+  }
+  return fn;
 }
 
 function doPost(e) {
@@ -34,9 +47,7 @@ function doPost(e) {
     var user = verifyUser_(req.idToken);
 
     // 2. Run the requested action.
-    var handler = getActions_()[req.action];
-    if (!handler) throw apiError_('unknown_action', 'Unknown action: ' + req.action);
-    var data = handler(req, user);
+    var data = getHandler_(req.action)(req, user);
 
     return json_({ ok: true, data: data });
   } catch (err) {
