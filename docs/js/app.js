@@ -115,7 +115,9 @@ function loadCache() {
 async function start() {
   if (CONFIG.API_URL.startsWith('PASTE_') || CONFIG.GOOGLE_CLIENT_ID.startsWith('PASTE_')) {
     $('view').innerHTML = `<section class="card"><h2>Almost there</h2>
-      <p>Fill in <code>docs/js/config.js</code> (see SETUP.md, step 6).</p></section>`;
+      <p>Fill in <code>docs/js/config.js</code> (see SETUP.md, step 8).</p>
+      <p class="muted small">Already filled in? GitHub Pages may still be serving the old copy.
+      Wait a few minutes, then reload (or open the site in a private tab).</p></section>`;
     return;
   }
 
