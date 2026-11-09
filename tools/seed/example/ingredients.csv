@@ -1,0 +1,7 @@
+id,name,name_hindi,section,grams_per_piece,perishable
+chana-dal,Chana dal,चना दाल,dals & grains,,n
+lauki,Lauki,लौकी,vegetables,700,y
+tomato,Tomato,टमाटर,vegetables,100,y
+carrot,Carrot,गाजर,vegetables,80,y
+cucumber,Cucumber,खीरा,vegetables,200,y
+lemon,Lemon,नींबू,greens & herbs,50,y
