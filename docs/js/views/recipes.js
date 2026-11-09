@@ -3,7 +3,7 @@
 import { esc, qtyText } from '../lib/format.js';
 import { longLabel, today } from '../lib/dates.js';
 import { yes, CATEGORIES, datesForRecipe } from '../lib/plan.js';
-import { dishTitle, scriptBlock, reelButtons, flagChips } from './components.js';
+import { dishTitle, scriptBlock, reelButtons, flagChips, altName } from './components.js';
 
 // Filters are kept while you move around the app (reset on reload).
 const filters = { q: '', category: '', region: '', soak: false, minProtein: '', inactive: false };
@@ -33,7 +33,7 @@ export function renderRecipes(idx, _params, rerender) {
 
   const opt = (value, label, current) => `<option value="${esc(value)}" ${value === current ? 'selected' : ''}>${esc(label)}</option>`;
 
-  const html = `<h1>Recipes</h1>
+  const html = `<div class="day-nav"><h1>Recipes</h1><a class="btn quiet" href="#/add">Add recipes</a></div>
     <form class="filters" id="recipe-filters" onsubmit="return false">
       <input type="search" name="q" placeholder="Search" value="${esc(filters.q)}" aria-label="Search recipes">
       <select name="category" aria-label="Category">
@@ -55,12 +55,10 @@ export function renderRecipes(idx, _params, rerender) {
     <ul class="recipe-list">
       ${list.map((r) => `<li>
         <a class="recipe-row" href="#/recipe/${encodeURIComponent(r.id)}">
-          <span class="cat cat-${esc(r.category)}">${esc(r.category || '?')}</span>
-          <span class="recipe-names">
-            <strong>${esc(r.name)}</strong>
-            ${r.name_hindi ? `<span class="hi" lang="hi">${esc(r.name_hindi)}</span>` : ''}
-            <span class="muted small">${esc([r.region, r.dal_type, r.soup_style].filter((x) => String(x ?? '').trim()).join(' · '))}</span>
-          </span>
+          <span class="cat">${esc(r.category || 'No category')}</span>
+          <strong>${esc(r.name)}</strong>
+          ${altName(r)}
+          <span class="muted small">${esc([r.region, r.dal_type, r.soup_style].filter((x) => String(x ?? '').trim()).join(', '))}</span>
           <span class="chips">${flagChips(r, yes)}</span>
         </a>
       </li>`).join('')}
@@ -106,20 +104,19 @@ export function renderRecipe(idx, params) {
   ].filter(([, v]) => String(v ?? '').trim());
 
   return `<a class="back" href="#/recipes">‹ All recipes</a>
-    <section class="card">
+    <header class="recipe-head">
       ${dishTitle(r, 'h1')}
       <div class="chips">${flagChips(r, yes)}</div>
-      <dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-      ${r.soak_review ? `<div class="alert warn">Soak review: ${esc(r.soak_review)}</div>` : ''}
+      <dl class="facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+      ${r.soak_review ? `<div class="alert warn" style="margin-top:14px"><strong>Soak review.</strong> ${esc(r.soak_review)}</div>` : ''}
       ${reelButtons(r)}
-    </section>
+    </header>
 
-    <section class="card">
+    <section class="card rule">
       <h2>Ingredients <span class="muted small">(for two)</span></h2>
       ${ingredients.length ? `<ul class="ingredients">${ingredients.map((ri) => `<li>
-          ${esc(qtyText(ri.quantity, ri.unit, ri.ingredient))}
-          ${ri.ingredient.name_hindi ? `<span class="hi" lang="hi">${esc(ri.ingredient.name_hindi)}</span>` : ''}
-          ${ri.prep_note ? `<span class="muted small">— ${esc(ri.prep_note)}</span>` : ''}
+          ${esc(qtyText(ri.quantity, ri.unit, ri.ingredient))}${ri.prep_note ? `<span class="muted">, ${esc(ri.prep_note)}</span>` : ''}
+          ${altName(ri.ingredient)}
           ${ri.soak ? '<span class="chip soak">soak overnight</span>' : ''}
         </li>`).join('')}</ul>` : '<p class="muted">No ingredients listed.</p>'}
     </section>
@@ -132,7 +129,7 @@ export function renderRecipe(idx, params) {
     ${r.category === 'soup' && (r.reheat_en || r.reheat_hindi) ? `<section class="card">
       <h2>Reheating</h2>
       ${r.reheat_en ? `<p>${esc(r.reheat_en)}</p>` : ''}
-      ${r.reheat_hindi ? `<p class="hi" lang="hi">${esc(r.reheat_hindi)}</p>` : ''}
+      ${r.reheat_hindi ? `<p class="muted" lang="hi-Latn">${esc(r.reheat_hindi)}</p>` : ''}
     </section>` : ''}
 
     ${r.notes ? `<section class="card"><h2>Notes</h2><p class="prewrap">${esc(r.notes)}</p></section>` : ''}
@@ -140,7 +137,7 @@ export function renderRecipe(idx, params) {
     <section class="card">
       <h2>Coming up</h2>
       ${upcoming.length
-        ? `<ul>${upcoming.map((d) => `<li><a href="#/tonight/${d}">${esc(longLabel(d))}</a></li>`).join('')}</ul>`
+        ? `<ul class="upcoming">${upcoming.map((d) => `<li><a href="#/tonight/${d}">${esc(longLabel(d))}</a></li>`).join('')}</ul>`
         : '<p class="muted">Not planned in the coming days.</p>'}
     </section>`;
 }

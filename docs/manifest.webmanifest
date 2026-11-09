@@ -3,8 +3,8 @@
   "short_name": "Meals",
   "start_url": "./#/tonight",
   "display": "standalone",
-  "background_color": "#f7f5f0",
-  "theme_color": "#2f6b4f",
+  "background_color": "#1F1E22",
+  "theme_color": "#1F1E22",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
   ]

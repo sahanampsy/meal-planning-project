@@ -10,19 +10,21 @@
 import { esc, qtyText } from '../lib/format.js';
 import { addDays, longLabel, DAY_NAMES, weekday, stepCookDay, defaultCardDate } from '../lib/dates.js';
 import { dayMeals, soaksFor, soakReviews, soakWarnAt, isCheeseNight, isCalciumNight } from '../lib/plan.js';
-import { dishTitle, scriptBlock, reelButtons } from './components.js';
+import { dishTitle, scriptBlock, reelButtons, altName } from './components.js';
 
 export function renderTonight(idx, params) {
   const date = params[0] || defaultCardDate();
   const evening = addDays(date, -1);
 
   const nav = `<div class="day-nav">
-    <a class="btn ghost" href="#/tonight/${stepCookDay(date, -1)}" aria-label="Previous day">‹</a>
-    <div class="day-nav-label">
+    <div>
       <div class="eyebrow">Read on ${DAY_NAMES[weekday(evening)]} evening</div>
       <h1>${esc(longLabel(date))}’s food</h1>
     </div>
-    <a class="btn ghost" href="#/tonight/${stepCookDay(date, 1)}" aria-label="Next day">›</a>
+    <div class="day-arrows">
+      <a class="arrow" href="#/tonight/${stepCookDay(date, -1)}" aria-label="Previous day">‹</a>
+      <a class="arrow" href="#/tonight/${stepCookDay(date, 1)}" aria-label="Next day">›</a>
+    </div>
   </div>`;
 
   // Saturday evening → Sunday: no cook.
@@ -41,8 +43,8 @@ export function renderTonight(idx, params) {
     return `${nav}
       <section class="card">
         <h2>Nothing planned</h2>
-        <p class="muted">There’s no row for ${esc(date)} in the Plan tab.</p>
-        <a class="btn ghost" href="#/week">Open the week view</a>
+        <p class="muted">Nothing is planned for this day yet.</p>
+        <div class="btn-row"><a class="btn" href="#/edit/${date}">Plan this day</a><a class="btn ghost" href="#/week">Open the week</a></div>
       </section>`;
   }
 
@@ -56,7 +58,8 @@ export function renderTonight(idx, params) {
     soupSection(meals),
     carbSaladSection(idx, meals),
     eveningSection(idx, date, meals),
-    meals.row.note ? `<section class="card"><h2>Note</h2><p>${esc(meals.row.note)}</p></section>` : '',
+    meals.row.note ? `<section class="card"><h2>Note</h2><p class="prewrap">${esc(meals.row.note)}</p></section>` : '',
+    `<div class="save-bar"><a class="btn ghost" href="#/edit/${date}">Change this day</a></div>`,
   ].join('');
 }
 
@@ -66,17 +69,20 @@ function soakSection(idx, date) {
   const many = soaks.length >= soakWarnAt(idx);
 
   const list = soaks.length
-    ? `<ul class="soak-list">${soaks.map((s) => `<li>
-          <strong>${esc(qtyText(s.quantity, s.unit, s.ingredient))}</strong>
-          ${s.ingredient.name_hindi ? `<span class="hi" lang="hi">${esc(s.ingredient.name_hindi)}</span>` : ''}
-          <div class="muted small">for ${esc(s.recipes.join(', '))}</div>
-        </li>`).join('')}</ul>`
+    ? `<ul class="soak-list">${soaks.map((s) => {
+        const [qty, what] = splitQty(qtyText(s.quantity, s.unit, s.ingredient));
+        return `<li>
+          <span class="soak-qty">${esc(qty)}</span>
+          <span class="soak-what">${esc(what)}${altName(s.ingredient)}</span>
+          <span class="muted small">for ${esc(s.recipes.join(', '))}</span>
+        </li>`;
+      }).join('')}</ul>`
     : `<p class="big-empty">Nothing to soak</p>`;
 
   return `<section class="card for-you ${many ? 'highlight' : ''}">
-    <div class="eyebrow">For you · tonight</div>
+    <div class="eyebrow">For you, before bed</div>
     <h2>Soak overnight</h2>
-    ${many ? `<div class="alert warn"><strong>${soaks.length} soaks tonight</strong> — don’t miss any.</div>` : ''}
+    ${many ? `<div class="alert warn"><strong>${soaks.length} soaks tonight.</strong> Tick each one off as you go.</div>` : ''}
     ${list}
     ${reviews.map((r) => `<div class="alert warn small">${esc(r.name)}: ${esc(r.soak_review)}</div>`).join('')}
   </section>`;
@@ -85,13 +91,13 @@ function soakSection(idx, date) {
 function dalSabziSection(meals) {
   const dish = (label, r) => r
     ? `<article class="dish">
-        <div class="eyebrow">${label}</div>
+        <div class="role">${label}</div>
         ${dishTitle(r)}
         ${scriptBlock(r.steps_hindi, r.steps_en)}
         ${reelButtons(r)}
         ${r.notes ? `<p class="muted small">Note: ${esc(r.notes)}</p>` : ''}
       </article>`
-    : `<article class="dish"><div class="eyebrow">${label}</div><p class="muted">Not planned</p></article>`;
+    : `<article class="dish"><div class="role">${label}</div><p class="muted">Not planned</p></article>`;
 
   return `<section class="card">
     <h2>Lunch: dal and sabzi</h2>
@@ -113,9 +119,9 @@ function soupSection(meals) {
 function carbSaladSection(idx, meals) {
   const line = (label, r) => r
     ? `<div class="line-item">
-        <div class="eyebrow">${label}</div>
+        <div class="role">${label}</div>
         ${dishTitle(r, 'h3')}
-        <details><summary>Details</summary>${scriptBlock(r.steps_hindi, r.steps_en)}</details>
+        <details><summary>Show script</summary>${scriptBlock(r.steps_hindi, r.steps_en)}</details>
       </div>`
     : '';
 
@@ -136,18 +142,23 @@ function eveningSection(idx, date, meals) {
 
   let cheeseLine;
   if (cheese && calcium) {
-    cheeseLine = `<div class="alert warn"><strong>Skip the cheese</strong> — calcium-tablet night. Toast only.</div>`;
+    cheeseLine = `<div class="alert warn"><strong>Skip the cheese.</strong> It’s a calcium-tablet night, so toast only.</div>`;
   } else if (cheese) {
-    cheeseLine = `<p class="pill yes">Cheese night — add cheese and toast</p>`;
+    cheeseLine = `<p class="pill yes">Cheese night: add cheese and toast</p>`;
   } else {
-    cheeseLine = `<p class="pill">Not a cheese night — toast only</p>`;
+    cheeseLine = `<p class="pill">Not a cheese night: toast only</p>`;
   }
 
   return `<section class="card">
-    <div class="eyebrow">${DAY_NAMES[weekday(date)]} evening</div>
-    <h2>That evening</h2>
+    <h2>${DAY_NAMES[weekday(date)]} evening</h2>
     ${s ? `<p><strong>Reheat ${esc(s.name)}:</strong> ${esc(reheatEn)}</p>` : ''}
-    ${reheatHi ? `<p class="hi" lang="hi">${esc(reheatHi)}</p>` : ''}
+    ${reheatHi ? `<p class="muted" lang="hi-Latn">${esc(reheatHi)}</p>` : ''}
     ${cheeseLine}
   </section>`;
+}
+
+/** "1 cup rajma" → ["1 cup", "rajma"], so the amount can be set large. */
+function splitQty(text) {
+  const m = String(text).match(/^([\d.,/½¼¾⅓⅔\s]+(?:g|kg|ml|l|tsp|tbsp|cups?|pieces?|bunch(?:es)?|pinch|cloves?|inch)?)\s+(.+)$/i);
+  return m ? [m[1].trim(), m[2]] : ['', text];
 }

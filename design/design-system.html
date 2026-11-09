@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en" data-theme="haldi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meal Planner · design directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..900&family=Hanken+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ===================================================================
+   TOKENS — one block per direction. Everything below reads only these.
+   =================================================================== */
+:root {
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px;
+}
+
+/* A — Haldi: warm, serif-led, recipe-notebook-meets-magazine */
+[data-theme="haldi"] {
+  --bg: #17120E; --surface: #211913; --surface-2: #2C221A; --line: #3B2F25;
+  --text: #F4EADB; --muted: #A99886; --accent: #F2B33D; --accent-ink: #1C1406;
+  --accent-2: #8DBB8F; --warn: #EE8A6A; --warn-bg: #3A2016;
+  --font-display: "Fraunces", Georgia, serif; --display-weight: 800; --display-style: normal;
+  --display-settings: "opsz" 144; --display-tracking: -0.02em;
+  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+  --radius-lg: 18px; --radius-md: 12px; --radius-sm: 999px;
+  --h1: 40px; --h2: 26px; --h3: 22px; --body: 16px; --small: 13.5px;
+}
+
+/* B — Kokum: poster grotesque, full-bleed bands, loud and graphic */
+[data-theme="kokum"] {
+  --bg: #0E1A16; --surface: #152520; --surface-2: #1D312A; --line: #2A433A;
+  --text: #EEF2E8; --muted: #93A89D; --accent: #F7739F; --accent-ink: #2B0815;
+  --accent-2: #E8D27C; --warn: #FFB65C; --warn-bg: #3A2A12;
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif; --display-weight: 800; --display-style: normal;
+  --display-settings: "wdth" 75, "opsz" 96; --display-tracking: -0.035em;
+  --font-body: "Bricolage Grotesque", system-ui, sans-serif;
+  --radius-lg: 4px; --radius-md: 4px; --radius-sm: 4px;
+  --h1: 60px; --h2: 30px; --h3: 22px; --body: 16px; --small: 13.5px;
+  --band-ink: #1E1A08; --band-muted: #4A4220;
+}
+
+/* D — Jamun: Kokum's bands and scale, Baingan's palette, Newsreader for legibility */
+[data-theme="jamun"] {
+  --bg: #1F1E22; --surface: #27262B; --surface-2: #312F36; --line: #45424B;
+  --text: #F2EFEA; --muted: #A29EA8; --accent: #B9A6FF; --accent-ink: #1B1433;
+  --accent-2: #9FD8C3; --warn: #F2A65A; --warn-bg: #3A2C1C;
+  --band-ink: #0F2A22; --band-muted: #2F5548;
+  --font-display: "Newsreader", Georgia, serif; --display-weight: 650; --display-style: normal;
+  --display-settings: "opsz" 72; --display-tracking: -0.025em;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --radius-lg: 4px; --radius-md: 4px; --radius-sm: 4px;
+  --h1: 54px; --h2: 30px; --h3: 24px; --body: 16px; --small: 13.5px;
+}
+[data-theme="jamun"] h1.screen-title { line-height: .95; font-weight: 700; }
+[data-theme="jamun"] .dish-title { font-weight: 600; }
+
+/* C — Baingan: quiet graphite, italic serif headlines, ruled not boxed */
+[data-theme="baingan"] {
+  --bg: #1F1E22; --surface: #27262B; --surface-2: #312F36; --line: #45424B;
+  --text: #F2EFEA; --muted: #A29EA8; --accent: #B9A6FF; --accent-ink: #1B1433;
+  --accent-2: #9FD8C3; --warn: #F2A65A; --warn-bg: #3A2C1C;
+  --font-display: "Instrument Serif", Georgia, serif; --display-weight: 400; --display-style: italic;
+  --display-settings: normal; --display-tracking: -0.01em;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --radius-lg: 0px; --radius-md: 10px; --radius-sm: 8px;
+  --h1: 46px; --h2: 32px; --h3: 25px; --body: 16px; --small: 13.5px;
+}
+
+/* ===================================================================
+   PAGE CHROME (the board itself)
+   =================================================================== */
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 400 var(--body)/1.5 var(--font-body);
+  transition: background .3s, color .3s;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.board { max-width: 1320px; margin: 0 auto; padding: 40px 28px 80px; }
+.board-head { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+.board-head h1 { margin: 0; font: var(--display-style) var(--display-weight) 56px/1 var(--font-display); font-variation-settings: var(--display-settings); letter-spacing: var(--display-tracking); }
+.board-head p { margin: 10px 0 0; color: var(--muted); max-width: 60ch; }
+
+.switch { display: flex; gap: 8px; flex-wrap: wrap; }
+.switch button {
+  font: 600 15px/1 var(--font-body); color: var(--text); background: var(--surface);
+  border: 1px solid var(--line); padding: 12px 16px; border-radius: var(--radius-md); cursor: pointer;
+  text-align: left;
+}
+.switch button small { display: block; font-weight: 400; color: var(--muted); margin-top: 4px; font-size: 12.5px; }
+.switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.switch button[aria-pressed="true"] small { color: var(--accent-ink); opacity: .75; }
+
+.rationale { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; padding: 32px 0; border-bottom: 1px solid var(--line); }
+.rationale h2 { margin: 0 0 8px; font: var(--display-style) var(--display-weight) 34px/1.1 var(--font-display); font-variation-settings: var(--display-settings); letter-spacing: var(--display-tracking); }
+.rationale p { margin: 0 0 10px; color: var(--muted); max-width: 62ch; }
+.rationale ul { margin: 0; padding-left: 18px; color: var(--muted); }
+.rationale li { margin-bottom: 6px; }
+.rationale li b { color: var(--text); font-weight: 600; }
+
+.section-title { font: 600 14px/1 var(--font-body); color: var(--muted); margin: 40px 0 16px; }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 12px; }
+.swatch { border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+.swatch i { display: block; height: 64px; }
+.swatch div { padding: 8px 10px; font-size: 13px; }
+.swatch code { color: var(--muted); font-size: 12px; }
+
+.specimen { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; align-items: baseline; }
+.spec-row { display: grid; grid-template-columns: 90px 1fr; gap: 16px; align-items: baseline; border-bottom: 1px solid var(--line); padding: 10px 0; }
+.spec-row > span:first-child { color: var(--muted); font-size: 12.5px; }
+
+.kit { display: flex; flex-wrap: wrap; gap: 28px 40px; align-items: flex-start; }
+.kit > div { display: flex; flex-direction: column; gap: 10px; }
+.kit-label { color: var(--muted); font-size: 12.5px; }
+
+.screens { display: flex; gap: 28px; overflow-x: auto; padding-bottom: 16px; }
+.screens > div { flex: 0 0 390px; }
+
+/* ===================================================================
+   PHONE + APP COMPONENTS  (this part becomes styles.css)
+   =================================================================== */
+.phone {
+  width: 390px; height: 800px; overflow-y: auto; position: relative;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 38px;
+  box-shadow: 0 0 0 8px var(--surface), 0 30px 60px rgba(0,0,0,.45);
+  scrollbar-width: none;
+}
+.phone::-webkit-scrollbar { display: none; }
+.phone-cap { color: var(--muted); font-size: 13px; margin: 0 0 12px 6px; }
+
+.topbar { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 18px 20px 12px; background: var(--bg); }
+.brand { font: var(--display-style) var(--display-weight) 20px/1 var(--font-display); font-variation-settings: var(--display-settings); letter-spacing: var(--display-tracking); color: var(--text); text-decoration: none; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--text); font-size: 17px; }
+
+.view { padding: 4px 20px 110px; }
+
+h1.screen-title, .dish-title, .sec h2 {
+  font-family: var(--font-display); font-weight: var(--display-weight); font-style: var(--display-style);
+  font-variation-settings: var(--display-settings); letter-spacing: var(--display-tracking);
+}
+h1.screen-title { font-size: var(--h1); line-height: .98; margin: 14px 0 0; }
+.kicker + h1.screen-title { margin-top: 12px; }
+.kicker + h2 { margin-top: 8px; }
+.sec h2 { font-size: var(--h2); line-height: 1.05; margin: 0 0 14px; }
+.dish-title { font-size: var(--h3); line-height: 1.1; margin: 0; }
+.dish-title a { color: inherit; text-decoration: none; }
+
+.kicker { font-size: var(--small); color: var(--muted); font-weight: 500; }
+.role { font-size: var(--small); font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.muted { color: var(--muted); }
+.small { font-size: var(--small); }
+
+.day-nav { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 12px; margin-bottom: 22px; }
+.day-arrows { display: flex; gap: 6px; }
+.arrow { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); color: var(--text); text-decoration: none; font-size: 20px; }
+
+.sec { margin-bottom: 14px; }
+.dish + .dish { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line); }
+
+.script { margin-top: 12px; }
+.script-text { margin: 0; font-size: 16px; line-height: 1.6; max-width: 60ch; }
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.btn {
+  font: 600 14.5px/1 var(--font-body); padding: 12px 16px; border-radius: var(--radius-sm);
+  background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); text-decoration: none; cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+.btn.quiet { background: var(--surface-2); color: var(--text); border-color: var(--surface-2); }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font: 600 12.5px/1 var(--font-body); padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); }
+.chip.soak { background: color-mix(in srgb, var(--accent-2) 20%, transparent); color: var(--accent-2); }
+.chip.dairy { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.off { background: transparent; color: var(--muted); border: 1px dashed var(--line); }
+
+.alert { border-left: 3px solid var(--warn); background: var(--warn-bg); color: var(--text); padding: 10px 12px; border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 14.5px; margin: 0 0 14px; }
+.alert b { color: var(--warn); }
+.pill { display: inline-block; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 14.5px; margin: 6px 0 0; }
+.pill.yes { background: color-mix(in srgb, var(--accent-2) 18%, transparent); color: var(--accent-2); font-weight: 600; }
+
+.soak-list { list-style: none; padding: 0; margin: 0; }
+.soak-list li { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.soak-list li:first-child { border-top: 0; padding-top: 0; }
+.soak-qty { font: var(--display-style) var(--display-weight) 26px/1 var(--font-display); font-variation-settings: var(--display-settings); color: var(--accent); grid-row: span 2; min-width: 56px; }
+.soak-list .what { font-weight: 600; }
+
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.line-item + .line-item { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+
+.tabbar {
+  position: sticky; bottom: 0; display: grid; grid-template-columns: repeat(3, 1fr);
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line); padding: 8px 12px 26px; margin-top: -90px;
+}
+.tabbar a { text-align: center; padding: 10px 0; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px; border-radius: var(--radius-md); }
+.tabbar a.on { color: var(--text); background: var(--surface-2); }
+
+/* Week */
+.week-day { display: grid; grid-template-columns: 58px 1fr; gap: 14px; padding: 16px 0; border-top: 1px solid var(--line); }
+.week-day .d { font: var(--display-style) var(--display-weight) 30px/1 var(--font-display); font-variation-settings: var(--display-settings); letter-spacing: var(--display-tracking); }
+.week-day .dn { display: block; font: 600 12.5px/1 var(--font-body); color: var(--muted); margin-top: 6px; font-style: normal; }
+.week-day .meals { display: grid; gap: 4px; font-size: 15px; }
+.week-day .meals > div { display: grid; grid-template-columns: 48px 1fr; align-items: baseline; }
+.week-day .meals span { color: var(--muted); font-size: 13px; }
+.week-day.today .d { color: var(--accent); }
+.week-day.today .dn { color: var(--accent); }
+
+/* Recipe */
+.back { color: var(--muted); text-decoration: none; font-size: 14px; display: inline-block; margin-bottom: 14px; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 18px 0; }
+.facts div { padding: 12px 0; }
+.facts div + div { border-left: 1px solid var(--line); padding-left: 12px; }
+.facts b { display: block; font: var(--display-style) var(--display-weight) 22px/1.1 var(--font-display); font-variation-settings: var(--display-settings); }
+.facts span { color: var(--muted); font-size: 12.5px; }
+.ing { list-style: none; padding: 0; margin: 0; }
+.ing li { display: grid; grid-template-columns: 84px 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.ing li b { font-weight: 600; color: var(--accent); }
+.search { width: 100%; padding: 13px 14px; border-radius: var(--radius-md); background: var(--surface); border: 1px solid var(--line); color: var(--text); font: inherit; margin-bottom: 16px; }
+
+/* ---------- Direction-specific structure ---------- */
+
+/* Haldi: sections are warm cards; the soak card is the one lit-up surface */
+[data-theme="haldi"] .sec { background: var(--surface); border-radius: var(--radius-lg); padding: 20px; }
+[data-theme="haldi"] .sec.for-you { background: var(--accent); color: var(--accent-ink); }
+[data-theme="haldi"] .sec.for-you .kicker, [data-theme="haldi"] .sec.for-you .muted { color: color-mix(in srgb, var(--accent-ink) 70%, transparent); }
+[data-theme="haldi"] .sec.for-you .soak-qty { color: var(--accent-ink); }
+[data-theme="haldi"] .sec.for-you .soak-list li { border-color: color-mix(in srgb, var(--accent-ink) 20%, transparent); }
+[data-theme="haldi"] .sec.for-you .alert { background: color-mix(in srgb, var(--accent-ink) 12%, transparent); border-color: var(--accent-ink); color: var(--accent-ink); }
+[data-theme="haldi"] .sec.for-you .alert b { color: var(--accent-ink); }
+
+/* Kokum: full-bleed bands, oversized condensed headlines, thick pink rule */
+:is([data-theme="kokum"], [data-theme="jamun"]) .view { padding-left: 0; padding-right: 0; }
+:is([data-theme="kokum"], [data-theme="jamun"]) .view > * { padding-left: 20px; padding-right: 20px; }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec { padding-top: 22px; padding-bottom: 24px; margin: 0; border-top: 6px solid var(--accent); }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec + .sec { border-top-width: 1px; border-top-color: var(--line); }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec.for-you { background: var(--accent-2); color: var(--band-ink); border-top: 0; }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec.for-you .kicker, :is([data-theme="kokum"], [data-theme="jamun"]) .sec.for-you .muted { color: var(--band-muted); }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec.for-you .soak-qty { color: var(--band-ink); }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec.for-you .soak-list li { border-color: var(--band-ink)33; }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec.for-you .alert { background: color-mix(in srgb, var(--band-ink) 8%, transparent); color: var(--band-ink); border-color: var(--band-ink); }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec.for-you .alert b { color: var(--band-ink); }
+:is([data-theme="kokum"], [data-theme="jamun"]) .sec.for-you + .sec { border-top: 6px solid var(--accent); }
+[data-theme="kokum"] .sec h2 { font-variation-settings: "wdth" 85, "opsz" 72; font-weight: 750; letter-spacing: -0.025em; }
+[data-theme="kokum"] h1.screen-title { font-size: 64px; line-height: .88; }
+[data-theme="kokum"] .dish-title { font-variation-settings: "wdth" 92, "opsz" 32; font-weight: 700; font-size: 24px; letter-spacing: -0.015em; }
+:is([data-theme="kokum"], [data-theme="jamun"]) .role { color: var(--accent); }
+:is([data-theme="kokum"], [data-theme="jamun"]) .btn { text-transform: none; letter-spacing: 0; }
+:is([data-theme="kokum"], [data-theme="jamun"]) .week-day { padding-left: 20px; padding-right: 20px; }
+:is([data-theme="kokum"], [data-theme="jamun"]) .week-day.today { background: var(--accent); color: var(--accent-ink); }
+:is([data-theme="kokum"], [data-theme="jamun"]) .week-day.today .d, :is([data-theme="kokum"], [data-theme="jamun"]) .week-day.today .dn, :is([data-theme="kokum"], [data-theme="jamun"]) .week-day.today .meals span { color: var(--accent-ink); }
+
+/* Baingan: no boxes; hairline-ruled sections and italic serif heads */
+/* Baingan headline variants (toggle on the board) */
+[data-theme="baingan"][data-head="upright"] { --display-style: normal; --h2: 34px; --h3: 27px; }
+[data-theme="baingan"][data-head="news"],
+[data-theme="baingan"][data-head="news-italic"] {
+  --font-display: "Newsreader", Georgia, serif; --display-weight: 560; --display-style: normal;
+  --display-settings: "opsz" 72; --display-tracking: -0.018em; --h1: 42px; --h2: 28px; --h3: 23px;
+}
+[data-theme="baingan"][data-head="news-italic"] { --display-style: italic; --display-weight: 520; }
+.subswitch { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 16px; }
+.subswitch button { font: 500 13.5px/1 var(--font-body); color: var(--text); background: transparent; border: 1px solid var(--line); padding: 9px 12px; border-radius: var(--radius-sm); cursor: pointer; }
+.subswitch button[aria-pressed="true"] { background: var(--surface-2); border-color: var(--accent); }
+
+[data-theme="baingan"] .sec { padding: 22px 0 24px; margin: 0; border-top: 1px solid var(--line); }
+[data-theme="baingan"] .sec.for-you { border-top: 0; background: var(--surface); margin: 0 -20px; padding: 22px 20px 24px; border-left: 3px solid var(--accent); }
+[data-theme="baingan"] .soak-qty { font-style: italic; font-size: 30px; }
+[data-theme="baingan"] .role { color: var(--accent); font-weight: 600; }
+[data-theme="baingan"] h1.screen-title { line-height: 1; }
+[data-theme="baingan"] .week-day.today { background: var(--surface); margin: 0 -20px; padding-left: 20px; padding-right: 20px; border-left: 3px solid var(--accent); }
+
+@media (max-width: 760px) {
+  .board-head, .rationale, .specimen { grid-template-columns: 1fr; }
+  .board-head h1 { font-size: 40px; }
+}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <header class="board-head">
+    <div>
+      <h1>Meal Planner, four ways</h1>
+      <p>Four dark, editorial directions, each shown on the real Tonight, Week and Recipe screens. Press 1–4 to switch. Scroll inside each phone.</p>
+    </div>
+    <div class="switch" role="group" aria-label="Design direction">
+      <button data-set="haldi">A · Haldi<small>Warm serif, turmeric</small></button>
+      <button data-set="kokum">B · Kokum<small>Poster grotesque, pink</small></button>
+      <button data-set="baingan">C · Baingan<small>Italic serif, ruled</small></button>
+      <button data-set="jamun">D · Jamun<small>Kokum layout, Baingan palette</small></button>
+    </div>
+  </header>
+
+  <section class="rationale" id="rationale"></section>
+
+  <div class="section-title">Colour</div>
+  <div class="swatches" id="swatches"></div>
+
+  <div class="section-title">Type</div>
+  <div class="specimen">
+    <div>
+      <div class="spec-row"><span>Screen title</span><span class="screen-title-spec" style="font-family:var(--font-display);font-weight:var(--display-weight);font-style:var(--display-style);font-variation-settings:var(--display-settings);letter-spacing:var(--display-tracking);font-size:var(--h1);line-height:1">Tuesday’s food</span></div>
+      <div class="spec-row"><span>Section</span><span style="font-family:var(--font-display);font-weight:var(--display-weight);font-style:var(--display-style);font-variation-settings:var(--display-settings);letter-spacing:var(--display-tracking);font-size:var(--h2);line-height:1.1">Lunch: dal and sabzi</span></div>
+      <div class="spec-row"><span>Dish</span><span style="font-family:var(--font-display);font-weight:var(--display-weight);font-style:var(--display-style);font-variation-settings:var(--display-settings);letter-spacing:var(--display-tracking);font-size:var(--h3);line-height:1.1">Rajma masala</span></div>
+    </div>
+    <div>
+      <div class="spec-row"><span>Body</span><span>Pressure-cook the soaked rajma with salt for 5 whistles.</span></div>
+      <div class="spec-row"><span>Script</span><span class="script-text">Fry onion, ginger and garlic, then add tomato purée and cook until the oil separates.</span></div>
+      <div class="spec-row"><span>Small</span><span class="small muted">for Rajma masala, Chana chaat</span></div>
+    </div>
+  </div>
+
+  <div class="section-title">Components</div>
+  <div class="kit">
+    <div><span class="kit-label">Buttons</span>
+      <div class="btn-row" style="margin:0"><button class="btn">Copy script</button><button class="btn quiet">Share reel</button></div></div>
+    <div><span class="kit-label">Recipe flags</span>
+      <div class="chips"><span class="chip soak">Soak</span><span class="chip dairy">Paneer</span><span class="chip warn">Kidney caution</span><span class="chip">Reel</span><span class="chip off">Inactive</span></div></div>
+    <div><span class="kit-label">Alert</span>
+      <div class="alert" style="margin:0;max-width:320px"><b>Skip the cheese.</b> It’s a calcium-tablet night, so toast only.</div></div>
+    <div><span class="kit-label">Status</span>
+      <div><span class="pill yes">Cheese night: add cheese and toast</span></div></div>
+  </div>
+
+  <div class="section-title">Screens</div>
+  <div class="screens">
+
+    <!-- ============ TONIGHT ============ -->
+    <div>
+      <p class="phone-cap">Tonight</p>
+      <div class="phone">
+        <header class="topbar"><a class="brand" href="#">Meal Planner</a><button class="icon-btn" aria-label="Reload">↻</button></header>
+        <main class="view">
+          <div class="day-nav">
+            <div>
+              <div class="kicker">Read on Monday evening</div>
+              <h1 class="screen-title">Tuesday’s food</h1>
+            </div>
+            <div class="day-arrows"><a class="arrow" href="#" aria-label="Previous day">‹</a><a class="arrow" href="#" aria-label="Next day">›</a></div>
+          </div>
+
+          <section class="sec for-you">
+            <div class="kicker">For you, before bed</div>
+            <h2>Soak overnight</h2>
+            <div class="alert"><b>3 soaks tonight.</b> Tick each one off as you go.</div>
+            <ul class="soak-list">
+              <li><span class="soak-qty">1 cup</span><span class="what">Rajma</span><span class="small muted">for Rajma masala</span></li>
+              <li><span class="soak-qty">½ cup</span><span class="what">Kala chana</span><span class="small muted">for Chana chaat salad</span></li>
+              <li><span class="soak-qty">2 tbsp</span><span class="what">Sabudana</span><span class="small muted">for Tomato soup</span></li>
+            </ul>
+          </section>
+
+          <section class="sec">
+            <h2>Lunch: dal and sabzi</h2>
+            <article class="dish">
+              <div class="role">Dal</div>
+              <h3 class="dish-title"><a href="#">Rajma masala</a></h3>
+              <div class="script">
+                <p class="script-text">Pressure-cook the soaked rajma with salt for 5 whistles. Fry onion, ginger and garlic, then add tomato purée and cook until the oil separates.</p>
+                <div class="btn-row"><button class="btn">Copy script</button></div>
+              </div>
+              <div class="btn-row"><a class="btn quiet" href="#">Open reel</a><button class="btn quiet">Share reel</button></div>
+            </article>
+            <article class="dish">
+              <div class="role">Sabzi</div>
+              <h3 class="dish-title"><a href="#">Turai chana dal</a></h3>
+              <div class="script">
+                <p class="script-text">Peel and chop 400 g turai (about 3). Temper with cumin and hing.</p>
+                <div class="btn-row"><button class="btn">Copy script</button></div>
+              </div>
+            </article>
+          </section>
+
+          <section class="sec">
+            <h2>Soup voice note</h2>
+            <h3 class="dish-title"><a href="#">Tomato and carrot soup</a></h3>
+            <div class="script">
+              <p class="script-text">Pressure-cook 4 tomatoes and 2 carrots for 2 whistles, then blend and strain.</p>
+              <div class="btn-row"><button class="btn">Copy script</button></div>
+            </div>
+          </section>
+
+          <section class="sec">
+            <h2>Carb and salad</h2>
+            <div class="line-item"><div class="role">Carb</div><h3 class="dish-title">Jeera rice</h3><details><summary>Show script</summary></details></div>
+            <div class="line-item"><div class="role">Salad</div><h3 class="dish-title">Chana chaat</h3><details><summary>Show script</summary></details></div>
+          </section>
+
+          <section class="sec">
+            <h2>Tuesday evening</h2>
+            <p style="margin:0 0 6px"><b>Reheat the soup</b> on low for 4 minutes, stirring once.</p>
+            <div class="alert" style="margin-top:14px"><b>Skip the cheese.</b> It’s a calcium-tablet night, so toast only.</div>
+          </section>
+        </main>
+        <nav class="tabbar"><a class="on" href="#">Tonight</a><a href="#">Week</a><a href="#">Recipes</a></nav>
+      </div>
+    </div>
+
+    <!-- ============ WEEK ============ -->
+    <div>
+      <p class="phone-cap">Week</p>
+      <div class="phone">
+        <header class="topbar"><a class="brand" href="#">Meal Planner</a><button class="icon-btn" aria-label="Reload">↻</button></header>
+        <main class="view">
+          <div class="day-nav">
+            <div><div class="kicker">9 to 14 November</div><h1 class="screen-title">This week</h1></div>
+            <div class="day-arrows"><a class="arrow" href="#" aria-label="Previous week">‹</a><a class="arrow" href="#" aria-label="Next week">›</a></div>
+          </div>
+          <div class="week">
+            <div class="week-day"><div><span class="d">9</span><span class="dn">Mon</span></div><div class="meals"><div><span>Dal</span>Moong dal tadka</div><div><span>Sabzi</span>Lauki chana</div><div><span>Soup</span>Pumpkin soup</div></div></div>
+            <div class="week-day today"><div><span class="d">10</span><span class="dn">Tue</span></div><div class="meals"><div><span>Dal</span>Rajma masala</div><div><span>Sabzi</span>Turai chana dal</div><div><span>Soup</span>Tomato and carrot</div></div></div>
+            <div class="week-day"><div><span class="d">11</span><span class="dn">Wed</span></div><div class="meals"><div><span>Dal</span>Masoor dal</div><div><span>Sabzi</span>Bhindi do pyaza</div><div><span>Soup</span>Spinach soup</div></div></div>
+            <div class="week-day"><div><span class="d">12</span><span class="dn">Thu</span></div><div class="meals"><div><span>Dal</span>Chole</div><div><span>Sabzi</span>Palak paneer</div><div><span>Soup</span>Lentil soup</div></div></div>
+            <div class="week-day"><div><span class="d">13</span><span class="dn">Fri</span></div><div class="meals"><div><span>Dal</span>Dal makhani</div><div><span>Sabzi</span>Aloo gobi</div><div><span>Soup</span>Minestrone</div></div></div>
+            <div class="week-day"><div><span class="d">14</span><span class="dn">Sat</span></div><div class="meals"><div><span>Dal</span>Sambar</div><div><span>Sabzi</span>Beans poriyal</div><div><span>Soup</span>Rasam</div></div></div>
+          </div>
+        </main>
+        <nav class="tabbar"><a href="#">Tonight</a><a class="on" href="#">Week</a><a href="#">Recipes</a></nav>
+      </div>
+    </div>
+
+    <!-- ============ RECIPE ============ -->
+    <div>
+      <p class="phone-cap">Recipe</p>
+      <div class="phone">
+        <header class="topbar"><a class="brand" href="#">Meal Planner</a><button class="icon-btn" aria-label="Reload">↻</button></header>
+        <main class="view">
+          <a class="back" href="#">‹ All recipes</a>
+          <div class="role">Dal</div>
+          <h1 class="screen-title">Rajma masala</h1>
+          
+          <div class="chips" style="margin-top:14px"><span class="chip soak">Soak</span><span class="chip warn">Kidney caution</span><span class="chip">Reel</span></div>
+          <div class="facts"><div><b>3</b><span>servings</span></div><div><b>45 min</b><span>cooking</span></div><div><b>8 hr</b><span>soaking</span></div></div>
+
+          <section class="sec">
+            <h2>Ingredients</h2>
+            <ul class="ing">
+              <li><b>1 cup</b><span>Rajma, soaked overnight</span></li>
+              <li><b>2</b><span>Onions, finely chopped</span></li>
+              <li><b>3</b><span>Tomatoes, puréed</span></li>
+              <li><b>1 tbsp</b><span>Ginger-garlic paste</span></li>
+              <li><b>1 tsp</b><span>Rajma masala</span></li>
+            </ul>
+          </section>
+          <section class="sec">
+            <h2>Script for the cook</h2>
+            <div class="script">
+              <p class="script-text">Pressure-cook the soaked rajma with salt for 5 whistles. Fry onion, ginger and garlic, then add tomato purée and cook until the oil separates.</p>
+              <div class="btn-row"><button class="btn">Copy script</button></div>
+            </div>
+          </section>
+        </main>
+        <nav class="tabbar"><a href="#">Tonight</a><a href="#">Week</a><a class="on" href="#">Recipes</a></nav>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const INFO = {
+  haldi: {
+    title: 'A · Haldi',
+    lede: 'The closest to NYT Cooking: a heavy, high-contrast serif carries every dish name, on a warm dark brown that feels like a kitchen at night.',
+    points: [
+      ['Signature', 'the soak card is the only lit surface. It’s solid turmeric, so the one job that’s yours tonight is impossible to miss.'],
+      ['Type', 'Fraunces 800 for headlines and Hanken Grotesk for reading.'],
+      ['Shape', 'soft rounded cards and pill buttons. Friendly, food-like.'],
+      ['Risk', 'the most familiar of the three, and the cosiest.'],
+    ],
+  },
+  kokum: {
+    title: 'B · Kokum',
+    lede: 'A food-magazine cover rather than a recipe card: condensed, very heavy grotesque headlines, full-bleed bands and a thick kokum-pink rule on a deep curry-leaf green.',
+    points: [
+      ['Signature', 'the giant condensed screen title, plus a mustard band for the soak list.'],
+      ['Type', 'Bricolage Grotesque throughout, using its width axis: 75 for headlines, 100 for body.'],
+      ['Shape', 'nearly square corners. Sections are bands, not cards.'],
+      ['Risk', 'the loudest. It’s energetic, but could feel busy on long scripts.'],
+    ],
+  },
+  jamun: {
+    title: 'D · Jamun',
+    lede: 'The mix: Kokum’s way of presenting information (full-width bands, a thick rule opening each screen, a solid soak band, the solid today row, oversized titles) in Baingan’s graphite and lavender, with Newsreader for headlines that stay readable.',
+    points: [
+      ['From Kokum', 'bands instead of cards, a 6px accent rule, a solid band for tonight’s soak list, the today row filled in, square corners.'],
+      ['From Baingan', 'graphite base, lavender accent, mint for the soak band and IBM Plex Sans for reading.'],
+      ['Type', 'Newsreader semibold, sturdy at every size; titles go up to 54px.'],
+      ['Risk', 'serif headlines are less shouty than Kokum’s condensed grotesque; the bands do the work.'],
+    ],
+  },
+  baingan: {
+    title: 'C · Baingan',
+    lede: 'Quiet and literary: italic serif headlines on graphite, with sections separated by hairlines instead of boxes. Aubergine lavender is the only colour.',
+    points: [
+      ['Signature', 'large italic Instrument Serif headlines. Elegant, with very little chrome around them.'],
+      ['Type', 'Instrument Serif for display and IBM Plex Sans for reading.'],
+      ['Shape', 'no cards. Rules and one inset lavender bar mark what matters.'],
+      ['Risk', 'the calmest. Less punchy, and the italic headlines are lighter in weight.'],
+    ],
+  },
+};
+const TOKENS = ['--bg','--surface','--surface-2','--line','--text','--muted','--accent','--accent-2','--warn'];
+const root = document.documentElement;
+
+const HEADS = [['italic', 'Instrument italic (original)'], ['upright', 'Instrument upright'], ['news', 'Newsreader'], ['news-italic', 'Newsreader italic']];
+function setHead(h) {
+  root.dataset.head = h;
+  history.replaceState(null, '', '#baingan/' + h);
+  document.querySelectorAll('.subswitch button').forEach(b => b.setAttribute('aria-pressed', b.dataset.head === h));
+}
+function setTheme(name) {
+  root.dataset.theme = name;
+  history.replaceState(null, '', '#' + name);
+  document.querySelectorAll('.switch button').forEach(b => b.setAttribute('aria-pressed', b.dataset.set === name));
+  const i = INFO[name];
+  document.getElementById('rationale').innerHTML =
+    `<div><h2>${i.title}</h2><p>${i.lede}</p>${name === 'baingan' ? `<div class="subswitch" role="group" aria-label="Headline font">${HEADS.map(([k, l]) => `<button data-head="${k}">${l}</button>`).join('')}</div>` : ''}</div><ul>${i.points.map(([k, v]) => `<li><b>${k}:</b> ${v}</li>`).join('')}</ul>`;
+  document.querySelectorAll('.subswitch button').forEach(b => b.addEventListener('click', () => setHead(b.dataset.head)));
+  if (name === 'baingan') setHead(root.dataset.head || 'news');
+  const cs = getComputedStyle(root);
+  document.getElementById('swatches').innerHTML = TOKENS.map(t => {
+    const v = cs.getPropertyValue(t).trim();
+    return `<div class="swatch"><i style="background:${v}"></i><div>${t.slice(2)}<br><code>${v}</code></div></div>`;
+  }).join('');
+}
+document.querySelectorAll('.switch button').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.set)));
+document.addEventListener('keydown', e => { const n = {1:'haldi',2:'kokum',3:'baingan',4:'jamun'}[e.key]; if (n) setTheme(n); });
+document.querySelectorAll('a[href="#"]').forEach(a => a.addEventListener('click', e => e.preventDefault()));
+const [t0, h0] = location.hash.slice(1).split('/');
+if (h0) root.dataset.head = h0;
+setTheme(INFO[t0] ? t0 : 'haldi');
+</script>
+</body>
+</html>

@@ -6,6 +6,9 @@
 //   #/week               this week's table   (#/week/2026-11-09 for another week)
 //   #/recipes            recipe list
 //   #/recipe/<id>        one recipe
+//   #/edit/2026-11-10    change one day of the plan
+//   #/add                add recipes (paste Markdown written by Claude)
+//   #/shop               this week's shopping list (#/shop/2026-11-09 for another week)
 
 import { initAuth, getToken, showSignIn, signOut, clearToken } from './auth.js';
 import { call, AUTH_ERRORS } from './api.js';
@@ -16,13 +19,22 @@ import { runAction, resetActions } from './views/components.js';
 import { renderTonight } from './views/tonight.js';
 import { renderWeek } from './views/week.js';
 import { renderRecipes, renderRecipe } from './views/recipes.js';
+import { renderEditDay } from './views/edit-day.js';
+import { renderAddRecipes } from './views/add-recipes.js';
+import { renderShop } from './views/shop.js';
 
 const ROUTES = {
   tonight: renderTonight,
   week: renderWeek,
   recipes: renderRecipes,
   recipe: renderRecipe,
+  edit: renderEditDay,
+  add: renderAddRecipes,
+  shop: renderShop,
 };
+
+// Which tab is highlighted for each screen.
+const TAB_FOR = { recipe: 'recipes', add: 'recipes', edit: 'week' };
 
 // Data is cached on the phone so the app opens instantly; it's refreshed from
 // the Sheet every time you open the app or tap ↻.
@@ -38,13 +50,13 @@ function render() {
   const [name, ...params] = location.hash.replace(/^#\/?/, '').split('/');
   const route = ROUTES[name] ? name : 'tonight';
   resetActions();
-  $('view').innerHTML = ROUTES[route](idx, params, render);
+  $('view').innerHTML = ROUTES[route](idx, params, render, app);
   $('tabbar').hidden = false;
   $('refresh-btn').hidden = false;
   $('signout-btn').hidden = false;
   document.querySelectorAll('#tabbar a').forEach((a) => {
     const tab = a.dataset.tab;
-    a.classList.toggle('active', tab === route || (tab === 'recipes' && route === 'recipe'));
+    a.classList.toggle('active', tab === (TAB_FOR[route] || route));
   });
 }
 
@@ -64,6 +76,34 @@ function showBanner(html) {
   b.innerHTML = html;
   b.hidden = !html;
 }
+
+// --- saving -------------------------------------------------------------------
+
+/**
+ * Passed to every view. app.save(action, payload) sends a change to the Sheet,
+ * swaps in the fresh data it returns, and resolves with the server's summary.
+ * On failure it shows what went wrong and resolves with null.
+ */
+const app = {
+  async save(action, payload) {
+    try {
+      const res = await call(action, payload);
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(res.bootstrap)); } catch {}
+      idx = buildIndex(res.bootstrap);
+      return res.summary || {};
+    } catch (e) {
+      if (AUTH_ERRORS.includes(e.code)) {
+        clearToken();
+        showBanner('<span>Sign in again, then save.</span><div id="gsi-banner"></div>');
+        showSignIn($('gsi-banner'));
+        toast('Not saved: sign in again');
+      } else {
+        toast(`Not saved: ${e.message}`);
+      }
+      return null;
+    }
+  },
+};
 
 // --- loading ------------------------------------------------------------------
 

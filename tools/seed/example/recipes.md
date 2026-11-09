@@ -1,7 +1,7 @@
 # Example recipes (generic, safe to keep in the public repo)
 
 ## Chana dal lauki
-- name_hindi: चना दाल लौकी
+- name_hindi: Chana dal lauki
 - category: dal
 - dal_type: chana
 - region: North Indian

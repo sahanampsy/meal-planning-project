@@ -5,8 +5,13 @@ export function esc(v) {
   return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-/** Round to at most 1 decimal, dropping ".0". */
+const FRACTIONS = [[0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
+
+/** 0.25 → "¼", 1.5 → "1½", 2.4 → "2.4": kitchen fractions where they fit, else 1 decimal. */
 function nice(n) {
+  const whole = Math.floor(n);
+  const frac = FRACTIONS.find(([v]) => Math.abs(n - whole - v) < 0.02);
+  if (frac) return `${whole || ''}${frac[1]}`;
   return String(Math.round(n * 10) / 10);
 }
 
@@ -75,5 +80,5 @@ export function toast(msg) {
   el.textContent = msg;
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (el.hidden = true), 1800);
+  toastTimer = setTimeout(() => (el.hidden = true), Math.max(1800, msg.length * 45));
 }

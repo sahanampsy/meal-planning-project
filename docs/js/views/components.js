@@ -24,16 +24,32 @@ export function resetActions() {
   actions.clear();
 }
 
-/** "Rajma masala · राजमा मसाला" heading for a dish. */
+/**
+ * The Hindi name of a recipe or ingredient, written in Latin letters
+ * ("Lauki chana dal"). Returns '' when it's missing or just repeats the English name.
+ */
+export function hindiName(item) {
+  const hi = String(item?.name_hindi ?? '').trim();
+  return hi && hi.toLowerCase() !== String(item?.name ?? '').trim().toLowerCase() ? hi : '';
+}
+
+/** Hindi name as a small muted span, or ''. */
+export function altName(item) {
+  const hi = hindiName(item);
+  return hi ? `<span class="alt" lang="hi-Latn">${esc(hi)}</span>` : '';
+}
+
+/** Dish heading: English name, with the Hindi name underneath when it differs. */
 export function dishTitle(recipe, tag = 'h3') {
   return `<${tag} class="dish-title">
     <a href="#/recipe/${encodeURIComponent(recipe.id)}">${esc(recipe.name)}</a>
-    ${recipe.name_hindi ? `<span class="hi" lang="hi">${esc(recipe.name_hindi)}</span>` : ''}
+    ${altName(recipe)}
   </${tag}>`;
 }
 
 /**
- * A read-aloud script: Hindi on top (big), English underneath, with a copy button.
+ * A read-aloud script: Hindi on top, English underneath, with copy buttons.
+ * Hindi is written in Latin letters ("Rajma ko kukar mein daalo…").
  * Until a Hindi script is added, the English one is shown as the main text.
  */
 export function scriptBlock(hindi, english, emptyText = 'No script yet.') {
@@ -44,7 +60,7 @@ export function scriptBlock(hindi, english, emptyText = 'No script yet.') {
   const main = hindi || english;
   return `<div class="script">
     ${hindi
-      ? `<p class="script-hi" lang="hi">${esc(hindi)}</p>
+      ? `<p class="script-main" lang="hi-Latn">${esc(hindi)}</p>
          ${english ? `<p class="script-en">${esc(english)}</p>` : ''}`
       : `<p class="script-main">${esc(english)}</p>
          <p class="muted small">Hindi script not added yet.</p>`}
@@ -60,8 +76,8 @@ export function reelButtons(recipe) {
   const url = String(recipe.instagram_reel_url ?? '').trim();
   if (!/^https?:\/\//i.test(url)) return '';
   return `<div class="btn-row">
-    <a class="btn reel" href="${esc(url)}" target="_blank" rel="noopener">Open reel</a>
-    <button class="btn ghost" ${onClick(() => shareLink(url, recipe.name))}>Share reel</button>
+    <a class="btn quiet" href="${esc(url)}" target="_blank" rel="noopener">Open reel</a>
+    <button class="btn quiet" ${onClick(() => shareLink(url, recipe.name))}>Share reel</button>
   </div>`;
 }
 

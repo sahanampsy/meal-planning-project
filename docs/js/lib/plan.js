@@ -42,6 +42,9 @@ export function buildIndex(raw) {
   const planByDate = {};
   for (const p of raw.plan) if (p.date) planByDate[str(p.date)] = p;
 
+  // ingredient ids marked in stock on the Pantry tab
+  const inStock = new Set((raw.pantry || []).filter((p) => yes(p.in_stock)).map((p) => str(p.ingredient_id)));
+
   return {
     user: raw.user,
     settings: raw.settings || {},
@@ -51,6 +54,7 @@ export function buildIndex(raw) {
     ingredientsById,
     ingredientsByRecipe,
     planByDate,
+    inStock,
     loadedAt: raw.loadedAt,
   };
 }

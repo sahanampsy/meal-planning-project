@@ -4,9 +4,19 @@
 That folder is **git-ignored**, so it never reaches the public repo. A worked
 example is in `tools/seed/example/`.
 
+**Adding a few recipes later:** ask Claude (the `write-recipe` skill in this repo
+knows the format and rules), then paste the result into the app: **Recipes → Add
+recipes**. The app checks it the same way this tool does and saves it straight into
+the Sheet. Use this tool for the first big import.
+
 You don't have to write this format yourself. Export your meal-plan doc
 (Markdown or plain text) into `/seed`, and Claude will convert it into this
 format, applying the soak rules below.
+
+## Hindi
+
+All Hindi (names, scripts, reheat notes) is written in **Latin letters**, never Devanagari.
+The seed tool lists any Devanagari it finds in REVIEW.md.
 
 ## recipes.md
 
@@ -15,7 +25,7 @@ One `##` heading per recipe. Fields come first, then `###` sections.
 ```markdown
 ## Rajma masala
 - id: rajma-masala
-- name_hindi: राजमा मसाला
+- name_hindi: Rajma masala
 - category: dal
 - dal_type: rajma
 - region: Punjabi
@@ -35,7 +45,7 @@ One `##` heading per recipe. Fields come first, then `###` sections.
 2. ...
 
 ### Steps (Hindi)
-(optional for now)
+(optional for now; write Hindi in Latin letters, e.g. "Rajma ko dho kar kukar mein daalo")
 
 ### Reheat
 (soups only: what we do in the evening)
@@ -48,7 +58,7 @@ Anything else.
 | field | values |
 |---|---|
 | id | optional; made from the name if missing |
-| name_hindi | Hindi name |
+| name_hindi | Hindi name, in Latin letters (e.g. `Lauki chana dal`). Leave it out if it's the same as the English name. |
 | category | `dal`, `sabzi`, `carb`, `salad`, `soup`, `side` (kadhi counts as `dal`) |
 | dal_type | dals and dal-based soups: `toor`, `moong`, `masoor`, `chana`, `rajma`, `kadhi`... |
 | soup_style | soups: `italian`, `indo-chinese`, `pasta`, `low-carb-veg`... |
@@ -65,6 +75,20 @@ Anything else.
 - Quantities are for two adults. Units: g, kg, ml, l, tsp, tbsp, cup, piece, bunch, pinch, clove, inch.
 - If you leave out the unit, it means pieces (`2 onion`).
 - `(soak overnight)` means **you** soak it the evening before. It then appears on the previous evening's card.
+
+## Plan block (in the app's Add recipes paste)
+A paste can also fill in plan days. Add a `# Plan` heading (one `#`) with a table:
+
+```markdown
+# Plan
+| date       | dal        | sabzi         | carb       | salad                 | soup        | cheese | note |
+|------------|------------|---------------|------------|-----------------------|-------------|--------|------|
+| 2026-11-11 | dal-dhokli | bharwa-bhindi |            | cucumber-carrot-salad | tomato-soup | y      | Order: soup, dal, sabzi, salad. |
+```
+
+- Columns: `date`, `dal`, `sabzi`, `carb`, `salad`, `side`, `soup`, `cheese` (y/n), `note`. Leave out a column to keep that field as it is.
+- Dish cells take a recipe id or its exact name, including recipes in the same paste. A blank cell clears that dish.
+- Days that are already planned are overwritten. Sundays aren't allowed.
 
 ## ingredients.csv (optional)
 `id,name,name_hindi,section,grams_per_piece,perishable`

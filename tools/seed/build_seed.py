@@ -55,11 +55,13 @@ UNITS = r"(?:g|kg|ml|l|tsp|tbsp|cups?|pieces?|pcs?|bunch(?:es)?|pinch|cloves?|in
 
 # Signs of a short hot-water soak done by the cook (not allowed — see FORMAT.md).
 SHORT_SOAK = re.compile(
-    r"(hot|warm|garam)\s+(water|paani|pani)|गरम\s*पानी|गुनगुने\s*पानी|"
+    r"(hot|warm|garam|gungun[ae])\s+(water|paani|pani)|"
     r"soak(ed)?\s+(it\s+)?for\s+\d+\s*(min|minutes|mins)|\b(15|20|30|45)\s*(min|minutes|mins)\b[^.\n]*soak|"
     r"half an hour[^.\n]*soak|soak[^.\n]*half an hour",
     re.IGNORECASE,
 )
+
+DEVANAGARI = re.compile(r"[\u0900-\u097F]")
 
 
 def slug(text):
@@ -215,11 +217,19 @@ def main(folder):
             has_soak = has_soak or soak == "y"
             recipe_ings.append({"recipe_id": rid, "ingredient_id": iid, "quantity": qty, "unit": unit,
                                 "soak_overnight": soak, "prep_note": note})
-        if has_soak and not re.search(r"rinse|already soak|भिगो|धो", text, re.IGNORECASE):
+        if has_soak and not re.search(r"rinse|already soak|bhig[oa]|bhigoya|\bdho", text, re.IGNORECASE):
             review.append(f"- **{r['name']}**: has an overnight soak, but the script doesn't tell the cook it's already soaking / to rinse it.")
         if not r["_ingredients"]:
             review.append(f"- **{r['name']}**: no ingredients listed.")
         recipes.append(row)
+
+    # Hindi is written in Latin letters ("Rajma ko dho lo"), never Devanagari.
+    for row in recipes:
+        if any(DEVANAGARI.search(str(row.get(f, ""))) for f in ("name_hindi", "steps_hindi", "reheat_hindi", "notes")):
+            review.append(f"- **{row['name']}**: has Devanagari text. Rewrite the Hindi in Latin letters.")
+    for ing in ingredients.values():
+        if DEVANAGARI.search(str(ing.get("name_hindi", ""))):
+            review.append(f"- Ingredient **{ing['name']}**: Hindi name is in Devanagari. Write it in Latin letters.")
 
     for ing in ingredients.values():
         if ing.get("section") and ing["section"] not in SECTIONS:

@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400..700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../docs/css/styles.css"></head><body>
+<header class="topbar"><a href="#/tonight" class="brand">Meal Planner</a><div class="topbar-actions"><button class="icon-btn">↻</button><button class="text-btn">Sign out</button></div></header>
+<main id="view"></main>
+<nav class="tabbar" id="tabbar"><a href="#/tonight" data-tab="tonight">Tonight</a><a href="#/week" data-tab="week">Week</a><a href="#/recipes" data-tab="recipes">Recipes</a><a href="#/shop" data-tab="shop">Shop</a></nav>
+<div id="toast" class="toast" hidden></div>
+<script type="module">
+import { buildIndex } from '../docs/js/lib/plan.js';
+import { toISO } from '../docs/js/lib/dates.js';
+import { renderTonight } from '../docs/js/views/tonight.js';
+import { renderWeek } from '../docs/js/views/week.js';
+import { renderRecipes, renderRecipe } from '../docs/js/views/recipes.js';
+import { renderEditDay } from '../docs/js/views/edit-day.js';
+import { renderAddRecipes } from '../docs/js/views/add-recipes.js';
+import { renderShop } from '../docs/js/views/shop.js';
+import { runAction } from '../docs/js/views/components.js';
+const src = (await (await fetch('../apps-script/Setup.gs')).text()) + (await (await fetch('../apps-script/SampleData.gs')).text());
+const tables = {};
+const stub = `function appendRows_(n, rows){ tables[n]=rows; } function setupSheet(){} function readTable_(){return []} function toast_(){}`;
+new Function('tables', src + stub + '\nloadSampleData();')(tables);
+const recipes = tables.Recipes;
+const rajma = recipes.find(r => r.id === 'rajma-masala');
+rajma.steps_hindi = 'Rajma raat bhar bhige hue hain. Pehle unhe dho lo, phir namak ke saath kukar mein 5 seeti lagao.\nPyaaz, adrak, lehsun bhuno, phir tamatar ki pyuree daal kar tel chhodne tak pakao.';
+rajma.steps_en = 'The rajma is already soaking. Rinse it, then pressure-cook with salt for 5 whistles.\nFry onion, ginger and garlic, add tomato purée and cook until the oil separates.';
+rajma.instagram_reel_url = 'https://www.instagram.com/reel/x';
+const plan = tables.Plan.map(p => ({ ...p, date: toISO(p.date) }));
+const idx = buildIndex({ recipes, ingredients: tables.Ingredients, recipeIngredients: tables.RecipeIngredients, pantry: tables.Pantry, plan, settings: { default_reheat_en: 'Reheat on low gas for 4 minutes.' }, rules: {} });
+const R = { tonight: renderTonight, week: renderWeek, recipes: renderRecipes, recipe: renderRecipe, edit: renderEditDay, add: renderAddRecipes, shop: renderShop };
+const app = { save: async () => null };
+document.addEventListener('click', (e) => { const el = e.target.closest('[data-action]'); if (el) runAction(el.dataset.action); });
+function render() {
+  const [name, ...params] = location.hash.replace(/^#\/?/, '').split('/');
+  const route = R[name] ? name : 'tonight';
+  document.getElementById('view').innerHTML = R[route](idx, params, render, app);
+  document.querySelectorAll('#tabbar a').forEach(a => a.classList.toggle('active', a.dataset.tab === ({edit:'week',add:'recipes'}[route]||route) || (a.dataset.tab === 'recipes' && route === 'recipe')));
+}
+addEventListener('hashchange', render); render();
+if (location.hash.startsWith('#/add')) { const ta = document.querySelector('#add-form textarea'); ta.value = await (await fetch('../tools/seed/example/recipes.md')).text(); ta.dispatchEvent(new Event('input', { bubbles: true })); }
+if (location.hash.startsWith('#/edit')) { const sel = document.querySelector('select[name=soup]'); sel.value = 'minestrone'; sel.dispatchEvent(new Event('input', { bubbles: true })); }
+</script></body></html>

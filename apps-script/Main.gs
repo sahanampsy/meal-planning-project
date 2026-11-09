@@ -16,6 +16,8 @@
 function getActions_() {
   return {
     bootstrap: actionBootstrap_, // Phase 1: load everything the app needs
+    savePlanDay: actionSavePlanDay_, // Phase 2: change one day of the plan
+    addRecipes: actionAddRecipes_,   // Phase 2: add (or replace) recipes pasted into the app
   };
 }
 

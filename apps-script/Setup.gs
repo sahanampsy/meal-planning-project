@@ -24,8 +24,8 @@ var SCHEMA = {
     'cruciferous', 'kidney_caution',                                        // y/n
     'equipment',       // comma list, e.g. "pressure cooker, kadai"
     'steps_en',        // English recipe / read-aloud script
-    'steps_hindi',     // Hindi read-aloud script (can be added later)
-    'reheat_en', 'reheat_hindi', // soups: how to reheat in the evening
+    'steps_hindi',     // Hindi read-aloud script in Latin letters (can be added later)
+    'reheat_en', 'reheat_hindi', // soups: how to reheat in the evening (Hindi in Latin letters)
     'instagram_reel_url',
     'soak_review',     // blank, or why this recipe's soak needs your attention
     'notes',
