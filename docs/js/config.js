@@ -6,8 +6,8 @@
 
 export const CONFIG = {
   // Apps Script → Deploy → Manage deployments → Web app URL (ends in /exec)
-  API_URL: 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE',
+  API_URL: 'https://script.google.com/macros/s/AKfycbygIYr86eM48jcn1dMcD8Ulv-F3ks6XQmQLmd_jYH7iRQc41C-vtSIHRmd6AR9CB2qBhA/exec',
 
   // Google Cloud → Google Auth Platform → Clients → your Web client ID
-  GOOGLE_CLIENT_ID: 'PASTE_YOUR_CLIENT_ID_HERE.apps.googleusercontent.com',
+  GOOGLE_CLIENT_ID: '672996115860-k006au4mb4kdliam9gd3foc99jq6f383.apps.googleusercontent.com',
 };
