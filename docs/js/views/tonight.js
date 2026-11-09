@@ -1,16 +1,16 @@
 // tonight.js — the evening card. Read on evening X, it shows the food for day X+1.
 //
-// Order on the card:
+// Order on the card (the same as the cook's evening routine):
 //   1. For you: what to soak tonight
-//   2. Dal and sabzi scripts (+ reel buttons if a dish has a reel)
-//   3. Soup voice-note script
-//   4. Carb, salad (and side)
-//   5. That evening: reheating, cheese night, calcium-tablet warning
+//   2. Voice note 1: the soup script
+//   3. Voice note 2: ONE lunch script (dal, sabzi, carb, salad, side), with one copy
+//      button, + reel buttons for dishes that have one
+//   4. That evening: reheating, cheese night, calcium-tablet warning
 
-import { esc, qtyText } from '../lib/format.js';
+import { esc, qtyText, copyText } from '../lib/format.js';
 import { addDays, longLabel, DAY_NAMES, weekday, stepCookDay, defaultCardDate } from '../lib/dates.js';
 import { dayMeals, soaksFor, soakReviews, soakWarnAt, isCheeseNight, isCalciumNight } from '../lib/plan.js';
-import { dishTitle, scriptBlock, reelButtons, altName } from './components.js';
+import { dishTitle, scriptBlock, reelButtons, altName, hindiName, onClick } from './components.js';
 
 export function renderTonight(idx, params) {
   const date = params[0] || defaultCardDate();
@@ -54,9 +54,8 @@ export function renderTonight(idx, params) {
       ? `<div class="alert warn">Plan has recipe ids that don’t exist in Recipes: ${meals.unknown.map(esc).join(', ')}</div>`
       : '',
     soakSection(idx, date),
-    dalSabziSection(meals),
     soupSection(meals),
-    carbSaladSection(idx, meals),
+    lunchSection(meals),
     eveningSection(idx, date, meals),
     meals.row.note ? `<section class="card"><h2>Note</h2><p class="prewrap">${esc(meals.row.note)}</p></section>` : '',
     `<div class="save-bar"><a class="btn ghost" href="#/edit/${date}">Change this day</a></div>`,
@@ -88,48 +87,70 @@ function soakSection(idx, date) {
   </section>`;
 }
 
-function dalSabziSection(meals) {
-  const dish = (label, r) => r
-    ? `<article class="dish">
-        <div class="role">${label}</div>
-        ${dishTitle(r)}
-        ${scriptBlock(r.steps_hindi, r.steps_en)}
-        ${reelButtons(r)}
-        ${r.notes ? `<p class="muted small">Note: ${esc(r.notes)}</p>` : ''}
-      </article>`
-    : `<article class="dish"><div class="role">${label}</div><p class="muted">Not planned</p></article>`;
-
-  return `<section class="card">
-    <h2>Lunch: dal and sabzi</h2>
-    ${dish('Dal', meals.dal)}
-    ${dish('Sabzi', meals.sabzi)}
-  </section>`;
-}
-
 function soupSection(meals) {
   const s = meals.soup;
   return `<section class="card">
-    <h2>Soup voice note</h2>
+    <div class="eyebrow">Voice note 1</div>
+    <h2>Soup</h2>
     ${s
       ? `${dishTitle(s)}${scriptBlock(s.steps_hindi, s.steps_en)}`
       : '<p class="muted">No soup planned</p>'}
   </section>`;
 }
 
-function carbSaladSection(idx, meals) {
-  const line = (label, r) => r
-    ? `<div class="line-item">
-        <div class="role">${label}</div>
-        ${dishTitle(r, 'h3')}
-        <details><summary>Show script</summary>${scriptBlock(r.steps_hindi, r.steps_en)}</details>
-      </div>`
-    : '';
+/** "a", "a aur b", "a, b aur c" (or "and" in English). */
+function joinNames(names, and) {
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} ${and} ${names[names.length - 1]}`;
+}
+
+/**
+ * The whole lunch as one voice-note script, in the order the cook makes it:
+ * an opening line naming the dishes, then each dish's script, then "keep lemon on the table".
+ * Dishes without a Hindi script use their English steps in the Hindi version.
+ */
+export function lunchScript(meals) {
+  const dishes = [meals.dal, meals.sabzi, meals.carb, meals.salad, meals.side].filter(Boolean);
+  const text = (r, lang) => String((lang === 'hi' ? r.steps_hindi || r.steps_en : r.steps_en) ?? '').trim();
+  const hiName = (r) => hindiName(r) || r.name;
+  const hi = [
+    `Kal dopahar ke khane mein ${joinNames(dishes.map(hiName), 'aur')} banana hai.`,
+    ...dishes.filter((r) => text(r, 'hi')).map((r) => `${hiName(r)}: ${text(r, 'hi')}`),
+    'Mez par nimbu rakhna.',
+  ].join('\n\n');
+  const en = [
+    `Tomorrow's lunch is ${joinNames(dishes.map((r) => r.name), 'and')}.`,
+    ...dishes.filter((r) => text(r, 'en')).map((r) => `${r.name}: ${text(r, 'en')}`),
+    'Keep lemon on the table.',
+  ].join('\n\n');
+  return { dishes, hi, en, missingHindi: dishes.filter((r) => !String(r.steps_hindi ?? '').trim()) };
+}
+
+function lunchSection(meals) {
+  const { dishes, hi, en, missingHindi } = lunchScript(meals);
+  if (!dishes.length) {
+    return `<section class="card"><div class="eyebrow">Voice note 2</div><h2>Lunch</h2><p class="muted">No lunch planned</p></section>`;
+  }
+  const roles = [['Dal', meals.dal], ['Sabzi', meals.sabzi], ['Carb', meals.carb], ['Salad', meals.salad], ['Side', meals.side]];
 
   return `<section class="card">
-    <h2>Carb and salad</h2>
-    ${line('Carb', meals.carb) || '<p class="muted">No carb planned</p>'}
-    ${line('Salad', meals.salad) || '<p class="muted">No salad planned</p>'}
-    ${line('Side', meals.side)}
+    <div class="eyebrow">Voice note 2</div>
+    <h2>Lunch</h2>
+    <ul class="lunch-dishes">
+      ${roles.filter(([, r]) => r).map(([label, r]) => `<li>
+        <span class="role">${label}</span>
+        <a href="#/recipe/${encodeURIComponent(r.id)}">${esc(r.name)}</a>${altName(r)}
+        ${reelButtons(r)}
+      </li>`).join('')}
+    </ul>
+    ${missingHindi.length ? `<p class="muted small">No Hindi script yet for ${esc(missingHindi.map((r) => r.name).join(', '))}; its English steps are used.</p>` : ''}
+    <div class="script">
+      <p class="script-main" lang="hi-Latn">${esc(hi)}</p>
+      <details><summary>English</summary><p class="script-en">${esc(en)}</p></details>
+      <div class="btn-row">
+        <button class="btn" ${onClick(() => copyText(hi, 'Lunch note copied'))}>Copy lunch note</button>
+        <button class="btn ghost" ${onClick(() => copyText(en, 'English copied'))}>Copy English</button>
+      </div>
+    </div>
   </section>`;
 }
 

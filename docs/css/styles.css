@@ -303,3 +303,11 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; padding
 .plan-row { padding: 12px 0; border-top: 1px solid var(--line); }
 .plan-row h3 { font-size: 20px; }
 .plan-row p { margin: 4px 0 0; }
+
+/* Voice note 2: the list of lunch dishes above the combined script */
+.lunch-dishes { list-style: none; padding: 0; margin: 0 0 14px; }
+.lunch-dishes li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.lunch-dishes li:last-child { border-bottom: 0; }
+.lunch-dishes .role { display: inline-block; min-width: 4.5em; }
+.lunch-dishes .alt { margin-left: 6px; }
+.lunch-dishes .btn-row { margin-top: 4px; }

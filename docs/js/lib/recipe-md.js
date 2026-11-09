@@ -10,7 +10,10 @@ const UNITS = '(?:g|kg|ml|l|tsp|tbsp|cups?|pieces?|pcs?|bunch(?:es)?|pinch|clove
 const UNIT_NAMES = { pieces: 'piece', pc: 'piece', pcs: 'piece', cups: 'cup', cloves: 'clove', bunches: 'bunch' };
 const YN_FIELDS = ['contains_paneer', 'contains_tofu', 'contains_cheese', 'contains_curd', 'cruciferous', 'kidney_caution'];
 const DEVANAGARI = /[ऀ-ॿ]/;
-const SHORT_SOAK = /(hot|warm|garam|gungun[ae])\s+(water|paani|pani)|soak(ed)?\s+(it\s+)?for\s+\d+\s*(min|minutes|mins)|\b(15|20|30|45)\s*(min|minutes|mins)\b[^.\n]*soak|half an hour[^.\n]*soak|soak[^.\n]*half an hour/i;
+// "soak in hot water", "soak for 30 minutes"… but not "add hot water if needed" while cooking.
+const SHORT_SOAK = /(hot|warm|garam|gungun[ae])\s+(water|paani|pani)[^.\n]*(soak|bhig)|(hot|warm|garam|gungun[ae])\s+(water|paani|pani)\s+(for\s+\d+\s*min|mein\s+\d+\s*minute)|(soak|bhig)[^.\n]*(hot|warm|garam|gungun[ae])\s+(water|paani|pani)|soak(ed)?\s+(it\s+)?for\s+\d+\s*(min|minutes|mins)|\b(15|20|30|45)\s*(min|minutes|mins)\b[^.\n]*soak|half an hour[^.\n]*soak|soak[^.\n]*half an hour/i;
+// A long pre-boil before cooking: should be an overnight soak instead.
+const PRE_BOIL = /pre-?boil|par-?boil|\bboil[^.\n]{0,40}\b(20|25|30|40|45)\s*(min|minutes|mins)\b|\b(20|25|30|40|45)\s*(min|minutes|mins|minute)\b[^.\n]{0,30}\b(boil|ubal)|\bubal[^.\n]{0,30}\b(20|25|30|40|45)\s*minute/i;
 const RINSE = /rinse|already soak|bhig[oa]|bhigoya|\bdho/i;
 
 export function slug(text) {
@@ -113,6 +116,10 @@ export function checkRecipe(r, idx, { replace = false } = {}) {
 
   const script = `${r.steps_en}\n${r.steps_hindi}`;
   if (SHORT_SOAK.test(script)) warnings.push('Mentions a short or hot-water soak. Make it an overnight soak instead.');
+  if (PRE_BOIL.test(script)) warnings.push('Has a long pre-boil (20+ minutes). Make it an overnight soak the evening before instead.');
+  if (r.category === 'dal' && String(r.dal_type ?? '').toLowerCase() !== 'kadhi' && !r.ingredients.some((i) => i.soak)) {
+    warnings.push('Every dal is soaked overnight: mark the dal “(soak overnight)” and tell the cook to rinse it.');
+  }
   if (r.ingredients.some((i) => i.soak) && !RINSE.test(script)) {
     warnings.push('Has an overnight soak, but the script doesn’t tell the cook it’s already soaking and to rinse it.');
   }

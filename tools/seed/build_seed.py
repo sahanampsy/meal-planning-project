@@ -55,9 +55,22 @@ UNITS = r"(?:g|kg|ml|l|tsp|tbsp|cups?|pieces?|pcs?|bunch(?:es)?|pinch|cloves?|in
 
 # Signs of a short hot-water soak done by the cook (not allowed — see FORMAT.md).
 SHORT_SOAK = re.compile(
-    r"(hot|warm|garam|gungun[ae])\s+(water|paani|pani)|"
+    # "soak in hot water", "garam pani mein bhigo", "soak for 30 minutes"… but not
+    # "add hot water if needed" while cooking: a soak word must be in the same sentence.
+    r"(hot|warm|garam|gungun[ae])\s+(water|paani|pani)[^.\n]*(soak|bhig)|"
+    r"(hot|warm|garam|gungun[ae])\s+(water|paani|pani)\s+(for\s+\d+\s*min|mein\s+\d+\s*minute)|"
+    r"(soak|bhig)[^.\n]*(hot|warm|garam|gungun[ae])\s+(water|paani|pani)|गरम\s*पानी|"
     r"soak(ed)?\s+(it\s+)?for\s+\d+\s*(min|minutes|mins)|\b(15|20|30|45)\s*(min|minutes|mins)\b[^.\n]*soak|"
     r"half an hour[^.\n]*soak|soak[^.\n]*half an hour",
+    re.IGNORECASE,
+)
+
+# A long pre-boil done before cooking (e.g. "boil the chana for 30 minutes first"):
+# should become an overnight soak by the user instead.
+PRE_BOIL = re.compile(
+    r"pre-?boil|par-?boil|\bboil[^.\n]{0,40}\b(20|25|30|40|45)\s*(min|minutes|mins)\b|"
+    r"\b(20|25|30|40|45)\s*(min|minutes|mins|minute)\b[^.\n]{0,30}\b(boil|ubal)|"
+    r"\bubal[^.\n]{0,30}\b(20|25|30|40|45)\s*minute",
     re.IGNORECASE,
 )
 
@@ -211,6 +224,9 @@ def main(folder):
         elif row["soak_review"]:
             review.append(f"- **{r['name']}**: {row['soak_review']}")
 
+        if PRE_BOIL.search(text):
+            review.append(f"- **{r['name']}**: has a long pre-boil (20+ minutes). Convert it to an overnight soak the evening before.")
+
         has_soak = False
         for qty, unit, name, soak, note in r["_ingredients"]:
             iid = ingredient_id(name, r["name"])
@@ -219,6 +235,8 @@ def main(folder):
                                 "soak_overnight": soak, "prep_note": note})
         if has_soak and not re.search(r"rinse|already soak|bhig[oa]|bhigoya|\bdho", text, re.IGNORECASE):
             review.append(f"- **{r['name']}**: has an overnight soak, but the script doesn't tell the cook it's already soaking / to rinse it.")
+        if row["category"] == "dal" and row["dal_type"].lower() != "kadhi" and not has_soak:
+            review.append(f"- **{r['name']}**: every dal is soaked overnight — mark the dal `(soak overnight)` and tell the cook to rinse it.")
         if not r["_ingredients"]:
             review.append(f"- **{r['name']}**: no ingredients listed.")
         recipes.append(row)

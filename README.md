@@ -57,3 +57,11 @@ Then open http://localhost:8000. For sign-in to work, `http://localhost:8000` mu
 2. ✅ Editing + shopping lists
 3. Ratings and notes
 4. Swipe to match + plan builder
+
+## Open items
+
+- **Privacy: commit author email.** Commit `104606f` ("Phase 2: plan editing…") was pushed from a
+  machine signed in to a different (work) account, so its author line shows a personal work email
+  in this public repo's history. To fix later: rewrite that commit's author to the GitHub no-reply
+  address and force-push this branch. Before pushing from that machine again, run
+  `git config user.email "<id>+<user>@users.noreply.github.com"` in this repo.
